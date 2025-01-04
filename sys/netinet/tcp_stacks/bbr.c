@@ -607,7 +607,7 @@ activate_rxt:
 			TCPT_RANGESET_NOSLOP(to, tov,
 			    (bbr->r_ctl.rc_min_rto_ms * MS_IN_USEC),
 			    (bbr->rc_max_rto_sec * USECS_IN_SECOND));
-			bbr_log_timer_var(bbr, 2, cts, 0, srtt, 0, to);
+			bbr_log_timer_var(bbr, 2, cts, 0, bbr_get_rtt(bbr, BBR_SRTT), 0, to);
 			return (to);
 		}
 		return (0);
@@ -3843,7 +3843,7 @@ bbr_post_recovery(struct tcpcb *tp)
 		else if (bbr->r_ctl.rc_delivered == 0)
 			lr2use = 1000;
 		else {
-			lr2use = bbr->r_ctl.rc_lost * 1000;
+			lr2use = (uint64_t)bbr->r_ctl.rc_lost * (uint64_t)1000;
 			lr2use /= bbr->r_ctl.rc_delivered;
 		}
 		lr2use += bbr->r_ctl.recovery_lr;
@@ -5553,7 +5553,7 @@ lost_rate:
 		bbr_type_log_hdwr_pacing(bbr,
 					 bbr->r_ctl.crte->ptbl->rs_ifp,
 					 rate,
-					 ((bbr->r_ctl.crte == NULL) ? 0 : bbr->r_ctl.crte->rate),
+					 bbr->r_ctl.crte->rate,
 					 __LINE__,
 					 cts,
 					 error);
@@ -6712,7 +6712,7 @@ bbr_update_bbr_info(struct tcp_bbr *bbr, struct bbr_sendmap *rsm, uint32_t rtt, 
 		bbr_log_rtt_shrinks(bbr, cts, 0, rtt, __LINE__, BBR_RTTS_NEWRTT, 0);
 		bbr_set_reduced_rtt(bbr, cts, __LINE__);
 	}
-	bbr_log_type_bbrrttprop(bbr, rtt, (rsm ? rsm->r_end : 0), uts, cts,
+	bbr_log_type_bbrrttprop(bbr, rtt, rsm->r_end, uts, cts,
 	    match, rsm->r_start, rsm->r_flags);
 	apply_filter_min_small(&bbr->r_ctl.rc_rttprop, rtt, cts);
 	if (old_rttprop != bbr_get_rtt(bbr, BBR_RTT_PROP)) {
