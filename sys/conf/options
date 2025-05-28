@@ -155,6 +155,7 @@ MAC_BIBA	opt_dontuse.h
 MAC_BSDEXTENDED	opt_dontuse.h
 MAC_DDB		opt_dontuse.h
 MAC_DEBUG	opt_mac.h
+MAC_DO		opt_dontuse.h
 MAC_IFOFF	opt_dontuse.h
 MAC_IPACL	opt_dontuse.h
 MAC_LOMAC	opt_dontuse.h
@@ -290,7 +291,6 @@ TARFS_DEBUG	opt_tarfs.h
 
 # In-kernel GSS-API
 KGSSAPI		opt_kgssapi.h
-KGSSAPI_DEBUG	opt_kgssapi.h
 
 # These static filesystems have one slightly bogus static dependency in
 # sys/i386/i386/autoconf.c.  If any of these filesystems are
@@ -480,7 +480,6 @@ ROUTETABLES		opt_route.h
 FIB_ALGO		opt_route.h
 RSS			opt_rss.h
 SLIP_IFF_OPTS		opt_slip.h
-TCPPCAP		opt_global.h
 SIFTR
 TCP_BLACKBOX		opt_global.h
 TCP_HHOOK		opt_global.h

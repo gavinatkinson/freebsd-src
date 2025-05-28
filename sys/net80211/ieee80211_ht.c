@@ -317,9 +317,12 @@ static int
 ht_getrate(struct ieee80211com *ic, int index, enum ieee80211_phymode mode,
     int ratetype)
 {
+	struct ieee80211_node_txrate tr;
 	int mword, rate;
 
-	mword = ieee80211_rate2media(ic, index | IEEE80211_RATE_MCS, mode);
+	tr = IEEE80211_NODE_TXRATE_INIT_HT(index);
+
+	mword = ieee80211_rate2media(ic, &tr, mode);
 	if (IFM_SUBTYPE(mword) != IFM_IEEE80211_MCS)
 		return (0);
 	switch (ratetype) {
@@ -1934,9 +1937,7 @@ ieee80211_vht_get_vhtflags(struct ieee80211_node *ni, uint32_t htflags)
 	vhtflags = 0;
 	if (ni->ni_flags & IEEE80211_NODE_VHT && vap->iv_vht_flags & IEEE80211_FVHT_VHT) {
 		if ((ni->ni_vht_chanwidth == IEEE80211_VHT_CHANWIDTH_160MHZ) &&
-		    /* XXX 2 means "160MHz and 80+80MHz", 1 means "160MHz" */
-		    (_IEEE80211_MASKSHIFT(vap->iv_vht_cap.vht_cap_info,
-		     IEEE80211_VHTCAP_SUPP_CHAN_WIDTH_MASK) >= 1) &&
+		    IEEE80211_VHTCAP_SUPP_CHAN_WIDTH_IS_160MHZ(vap->iv_vht_cap.vht_cap_info) &&
 		    (vap->iv_vht_flags & IEEE80211_FVHT_USEVHT160)) {
 			vhtflags = IEEE80211_CHAN_VHT160;
 			/* Mirror the HT40 flags */
@@ -1946,9 +1947,7 @@ ieee80211_vht_get_vhtflags(struct ieee80211_node *ni, uint32_t htflags)
 				vhtflags |= IEEE80211_CHAN_HT40D;
 			}
 		} else if ((ni->ni_vht_chanwidth == IEEE80211_VHT_CHANWIDTH_80P80MHZ) &&
-		    /* XXX 2 means "160MHz and 80+80MHz" */
-		    (_IEEE80211_MASKSHIFT(vap->iv_vht_cap.vht_cap_info,
-		     IEEE80211_VHTCAP_SUPP_CHAN_WIDTH_MASK) == 2) &&
+		    IEEE80211_VHTCAP_SUPP_CHAN_WIDTH_IS_160_80P80MHZ(vap->iv_vht_cap.vht_cap_info) &&
 		    (vap->iv_vht_flags & IEEE80211_FVHT_USEVHT80P80)) {
 			vhtflags = IEEE80211_CHAN_VHT80P80;
 			/* Mirror the HT40 flags */
@@ -2593,6 +2592,11 @@ ht_recv_action_ba_delba(struct ieee80211_node *ni,
 	return 0;
 }
 
+/*
+ * Handle the HT channel width action frame.
+ *
+ * 802.11-2020 9.6.11.2 (Notify Channel Width frame format).
+ */
 static int
 ht_recv_action_ht_txchwidth(struct ieee80211_node *ni,
 	const struct ieee80211_frame *wh __unused,
@@ -2604,12 +2608,17 @@ ht_recv_action_ht_txchwidth(struct ieee80211_node *ni,
 	if ((ni->ni_htcap & IEEE80211_HTCAP_CHWIDTH40) == 0)
 		return (0);
 
+	/*
+	 * The supported values are either 0 (any supported width)
+	 * or 1 (HT20).  80, 160, etc MHz widths are not represented
+	 * here.
+	 */
 	chw = (frm[2] == IEEE80211_A_HT_TXCHWIDTH_2040) ?
 	    IEEE80211_STA_RX_BW_40 : IEEE80211_STA_RX_BW_20;
 
 	IEEE80211_NOTE(ni->ni_vap, IEEE80211_MSG_ACTION | IEEE80211_MSG_11N, ni,
-	    "%s: HT txchwidth, width %b%s",
-	    __func__, chw, IEEE80211_NI_CHW_BITS, ni->ni_chw != chw ? "*" : "");
+	    "%s: HT txchwidth, width %d%s (%s)", __func__,
+	    chw, ni->ni_chw != chw ? "*" : "", ieee80211_ni_chw_to_str(chw));
 	if (chw != ni->ni_chw) {
 		/* XXX does this need to change the ht40 station count? */
 		ni->ni_chw = chw;

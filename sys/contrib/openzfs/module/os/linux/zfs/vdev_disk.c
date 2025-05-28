@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: CDDL-1.0
 /*
  * CDDL HEADER START
  *
@@ -1198,9 +1199,8 @@ vdev_disk_io_flush_completion(struct bio *bio)
 {
 	zio_t *zio = bio->bi_private;
 	zio->io_error = bi_status_to_errno(bio->bi_status);
-
-	if (zio->io_error && (zio->io_error == EOPNOTSUPP))
-		zio->io_vd->vdev_nowritecache = B_TRUE;
+	if (zio->io_error == EOPNOTSUPP || zio->io_error == ENOTTY)
+		zio->io_error = SET_ERROR(ENOTSUP);
 
 	bio_put(bio);
 	ASSERT3S(zio->io_error, >=, 0);
@@ -1554,7 +1554,8 @@ vdev_ops_t vdev_disk_ops = {
 	.vdev_op_fini = NULL,
 	.vdev_op_open = vdev_disk_open,
 	.vdev_op_close = vdev_disk_close,
-	.vdev_op_asize = vdev_default_asize,
+	.vdev_op_asize_to_psize = vdev_default_psize,
+	.vdev_op_psize_to_asize = vdev_default_asize,
 	.vdev_op_min_asize = vdev_default_min_asize,
 	.vdev_op_min_alloc = NULL,
 	.vdev_op_io_start = vdev_disk_io_start,
