@@ -51,6 +51,7 @@
 ;	SYSMUX	syscall multiplexer.  No prototype, argument struct, or
 ;		handler is declared or used.  Handled in MD syscall code.
 ;	CAPENABLED syscall is allowed in capability mode
+;	NORETURN the syscall does not return
 ;
 ; To support programmatic generation of both the default ABI and 32-bit compat
 ; (freebsd32) we impose a number of restrictions on the types of system calls.
@@ -124,8 +125,8 @@
 		    ...
 		);
 	}
-1	AUE_EXIT	STD|CAPENABLED {
-		void exit(
+1	AUE_EXIT	STD|CAPENABLED|NORETURN {
+		void _exit(
 		    int rval
 		);
 	}
@@ -1223,7 +1224,7 @@
 	}
 202	AUE_SYSCTL	STD|CAPENABLED {
 		int __sysctl(
-		    _In_reads_(namelen) int *name,
+		    _In_reads_(namelen) const int *name,
 		    u_int namelen,
 		    _Out_writes_bytes_opt_(*oldlenp) void *old,
 		    _Inout_opt_ size_t *oldlenp,
@@ -3347,6 +3348,27 @@
 		    u_int flags,
 		    _In_reads_bytes_(size) _Contains_ptr_ const struct setcred *wcred,
 		    size_t size
+		);
+	}
+592	AUE_NULL	STD|CAPENABLED {
+		int exterrctl(
+		    u_int op,
+		    u_int flags,
+		    _In_reads_bytes_(4) void *ptr
+		);
+	}
+593	AUE_INOTIFY	STD|CAPENABLED {
+		int inotify_add_watch_at(
+		    int fd,
+		    int dfd,
+		    _In_z_ const char *path,
+		    uint32_t mask
+		);
+	}
+594	AUE_INOTIFY	STD|CAPENABLED {
+		int inotify_rm_watch(
+		    int fd,
+		    int wd
 		);
 	}
 

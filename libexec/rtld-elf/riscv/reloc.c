@@ -40,13 +40,6 @@
 #include "rtld.h"
 #include "rtld_printf.h"
 
-/*
- * It is possible for the compiler to emit relocations for unaligned data.
- * We handle this situation with these inlines.
- */
-#define	RELOC_ALIGNED_P(x) \
-	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
-
 uint64_t
 set_gp(Obj_Entry *obj)
 {
@@ -478,9 +471,6 @@ allocate_initial_tls(Obj_Entry *objs)
 void *
 __tls_get_addr(tls_index* ti)
 {
-	struct dtv **dtvp;
-
-	dtvp = &_tcb_get()->tcb_dtv;
-	return (tls_get_addr_common(dtvp, ti->ti_module, ti->ti_offset +
+	return (tls_get_addr_common(_tcb_get(), ti->ti_module, ti->ti_offset +
 	    TLS_DTV_OFFSET));
 }

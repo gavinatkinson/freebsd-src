@@ -548,8 +548,7 @@ allocate_initial_tls(Obj_Entry *objs)
 	 */
 	if (__getosreldate() >= P_OSREL_TLSBASE)
 		sysarch(AMD64_SET_TLSBASE, &addr);
-	else if (__getosreldate() >= P_OSREL_WRFSBASE &&
-	    (cpu_stdext_feature & CPUID_STDEXT_FSGSBASE) != 0)
+	else if ((cpu_stdext_feature & CPUID_STDEXT_FSGSBASE) != 0)
 		wrfsbase((uintptr_t)addr);
 	else
 		sysarch(AMD64_SET_FSBASE, &addr);
@@ -558,10 +557,7 @@ allocate_initial_tls(Obj_Entry *objs)
 void *
 __tls_get_addr(tls_index *ti)
 {
-	struct dtv **dtvp;
-
-	dtvp = &_tcb_get()->tcb_dtv;
-	return (tls_get_addr_common(dtvp, ti->ti_module, ti->ti_offset));
+	return (tls_get_addr_common(_tcb_get(), ti->ti_module, ti->ti_offset));
 }
 
 size_t

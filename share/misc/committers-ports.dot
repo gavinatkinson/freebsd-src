@@ -153,6 +153,7 @@ ak [label="Alex Kozlov\nak@FreeBSD.org\n2012/02/29"]
 ale [label="Alex Dupre\nale@FreeBSD.org\n2004/01/12"]
 alepulver [label="Alejandro Pulver\nalepulver@FreeBSD.org\n2006/04/01"]
 alexey [label="Alexey Degtyarev\nalexey@FreeBSD.org\n2013/11/09"]
+alven [label="Älven\nalven@FreeBSD.org\n2025/07/28"]
 amdmi3 [label="Dmitry Marakasov\namdmi3@FreeBSD.org\n2008/06/19"]
 antoine [label="Antoine Brodin\nantoine@FreeBSD.org\n2013/04/03"]
 arrowd [label="Gleb Popov\narrowd@FreeBSD.org\n2018/05/18"]
@@ -183,6 +184,7 @@ demon [label="Dmitry Sivachenko\ndemon@FreeBSD.org\n2000/11/13"]
 diizzy [label="Daniel Engberg\ndiizzy@FreeBSD.org\n2021/07/06"]
 dmgk [label="Dmitri Goutnik\ndmgk@FreeBSD.org\n2019/09/15"]
 driesm [label="Dries Michiels\ndriesm@FreeBSD.org\n2021/11/06"]
+dtxdf [label="Jesús Daniel Colmenares Oviedo\ndtxdf@FreeBSD.org\n2025/06/02"]
 dumbbell [label="Jean-Sebastien Pedron\ndumbbell@FreeBSD.org\n2017/01/10"]
 dvl [label="Dan Langille\ndvl@FreeBSD.org\n2014/08/10"]
 eadler [label="Eitan Adler\neadler@FreeBSD.org\n2011/08/17"]
@@ -319,6 +321,8 @@ zirias [label="Felix Palmen\nzirias@FreeBSD.org\n2022/08/02"]
 "0mp" -> driesm
 "0mp" -> nc
 
+acm -> dtxdf
+
 adamw -> ahze
 adamw -> jylefort
 adamw -> ler
@@ -417,6 +421,7 @@ culot -> marino
 culot -> pi
 culot -> wg
 
+db -> alven
 db -> tj
 db -> shurd
 
@@ -862,6 +867,7 @@ wxs -> zi
 
 ygy -> yasu
 
+yuri -> alven
 yuri -> rea
 
 zirias -> jbo

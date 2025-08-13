@@ -21,11 +21,13 @@ function prefix() {
   S=$((DIFF-(M*60)))
 
   CTR=$(cat /tmp/ctr)
-  echo $LINE| grep -q "^Test[: ]" && CTR=$((CTR+1)) && echo $CTR > /tmp/ctr
+  echo $LINE| grep -q '^\[.*] Test[: ]' && CTR=$((CTR+1)) && echo $CTR > /tmp/ctr
 
   BASE="$HOME/work/zfs/zfs"
   COLOR="$BASE/scripts/zfs-tests-color.sh"
-  CLINE=$(echo $LINE| grep "^Test[ :]" | sed -e 's|/usr/local|/usr|g' \
+  CLINE=$(echo $LINE| grep '^\[.*] Test[: ]' \
+    | sed -e 's|^\[.*] Test|Test|g' \
+    | sed -e 's|/usr/local|/usr|g' \
     | sed -e 's| /usr/share/zfs/zfs-tests/tests/| |g' | $COLOR)
   if [ -z "$CLINE" ]; then
     printf "vm${ID}: %s\n" "$LINE"
@@ -90,6 +92,13 @@ case "$1" in
     sudo mount -o noatime /dev/vdb /var/tmp
     sudo chmod 1777 /var/tmp
     sudo mv -f /tmp/*.txt /var/tmp
+    ;;
+esac
+
+# enable io_uring on el9/el10
+case "$1" in
+  almalinux9|almalinux10|centos-stream*)
+    sudo sysctl kernel.io_uring_disabled=0 > /dev/null
     ;;
 esac
 

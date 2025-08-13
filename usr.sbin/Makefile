@@ -14,6 +14,8 @@ SUBDIR=	adduser \
 	clear_locks \
 	crashinfo \
 	cron \
+	ctld \
+	ctladm \
 	daemon \
 	dconschat \
 	devctl \
@@ -54,7 +56,6 @@ SUBDIR=	adduser \
 	nfsuserd \
 	nmtree \
 	nologin \
-	nvmfd \
 	pciconf \
 	periodic \
 	pnfsdscopymr \
@@ -138,7 +139,9 @@ SUBDIR.${MK_FLOPPY}+=	fdformat
 SUBDIR.${MK_FLOPPY}+=	fdread
 SUBDIR.${MK_FLOPPY}+=	fdwrite
 SUBDIR.${MK_FREEBSD_UPDATE}+=	freebsd-update
+.if ${MK_KERBEROS_SUPPORT} != "no"
 SUBDIR.${MK_GSSAPI}+=	gssd
+.endif
 SUBDIR.${MK_GPIO}+=	gpioctl
 SUBDIR.${MK_HYPERV}+=	hyperv
 SUBDIR.${MK_INET6}+=	ip6addrctl
@@ -153,7 +156,7 @@ SUBDIR.${MK_INET6}+=	rtsold
 SUBDIR.${MK_INET6}+=	traceroute6
 SUBDIR.${MK_INETD}+=	inetd
 SUBDIR.${MK_IPFW}+=	ipfwpcap
-SUBDIR.${MK_ISCSI}+=	ctladm ctld iscsid
+SUBDIR.${MK_ISCSI}+=	iscsid
 SUBDIR.${MK_JAIL}+=	jail
 SUBDIR.${MK_JAIL}+=	jexec
 SUBDIR.${MK_JAIL}+=	jls
@@ -171,7 +174,6 @@ SUBDIR.${MK_NETGRAPH}+=	flowctl
 SUBDIR.${MK_NETGRAPH}+=	ngctl
 SUBDIR.${MK_NETGRAPH}+=	nghook
 SUBDIR.${MK_NIS}+=	rpc.yppasswdd
-SUBDIR.${MK_NIS}+=	rpc.ypupdated
 SUBDIR.${MK_NIS}+=	rpc.ypxfrd
 SUBDIR.${MK_NIS}+=	ypbind
 SUBDIR.${MK_NIS}+=	ypldap

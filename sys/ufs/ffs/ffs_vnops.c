@@ -508,9 +508,7 @@ ffs_lock(
 	case LK_EXCLUSIVE:
 		flags = ap->a_flags;
 		for (;;) {
-#ifdef DEBUG_VFS_LOCKS
 			VNPASS(vp->v_holdcnt != 0, vp);
-#endif	/* DEBUG_VFS_LOCKS */
 			lkp = vp->v_vnlock;
 			result = lockmgr_lock_flags(lkp, flags,
 			    &VI_MTX(vp)->lock_object, ap->a_file, ap->a_line);
@@ -1399,8 +1397,7 @@ ffs_lock_ea(struct vnode *vp)
 	VI_LOCK(vp);
 	while (ip->i_flag & IN_EA_LOCKED) {
 		UFS_INODE_SET_FLAG(ip, IN_EA_LOCKWAIT);
-		msleep(&ip->i_ea_refs, &vp->v_interlock, PINOD + 2, "ufs_ea",
-		    0);
+		msleep(&ip->i_ea_refs, &vp->v_interlock, PINOD, "ufs_ea", 0);
 	}
 	UFS_INODE_SET_FLAG(ip, IN_EA_LOCKED);
 	VI_UNLOCK(vp);

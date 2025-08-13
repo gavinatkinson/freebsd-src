@@ -1000,12 +1000,11 @@ vm_object_page_remove_write(vm_page_t p, int flags, boolean_t *allclean)
 
 static int
 vm_object_page_clean_flush(struct pctrie_iter *pages, vm_page_t p,
-    int pagerflags, int flags, boolean_t *allclean, boolean_t *eio)
+    int pagerflags, int flags, boolean_t *allclean, bool *eio)
 {
 	vm_page_t ma[vm_pageout_page_count];
 	int count, runlen;
 
-	vm_page_lock_assert(p, MA_NOTOWNED);
 	vm_page_assert_xbusied(p);
 	ma[0] = p;
 	runlen = vm_radix_iter_lookup_range(pages, p->pindex + 1,
@@ -1020,8 +1019,7 @@ vm_object_page_clean_flush(struct pctrie_iter *pages, vm_page_t p,
 		}
 	}
 
-	vm_pageout_flush(ma, count, pagerflags, 0, &runlen, eio);
-	return (runlen);
+	return (vm_pageout_flush(ma, count, pagerflags, eio));
 }
 
 /*
@@ -1054,7 +1052,8 @@ vm_object_page_clean(vm_object_t object, vm_ooffset_t start, vm_ooffset_t end,
 	vm_page_t np, p;
 	vm_pindex_t pi, tend, tstart;
 	int curgeneration, n, pagerflags;
-	boolean_t eio, res, allclean;
+	boolean_t res, allclean;
+	bool eio;
 
 	VM_OBJECT_ASSERT_WLOCKED(object);
 
@@ -2530,6 +2529,7 @@ vm_object_list_handler(struct sysctl_req *req, bool swap_only)
 		kvo->kvo_memattr = obj->memattr;
 		kvo->kvo_active = 0;
 		kvo->kvo_inactive = 0;
+		kvo->kvo_laundry = 0;
 		kvo->kvo_flags = 0;
 		if (!swap_only) {
 			vm_page_iter_init(&pages, obj);

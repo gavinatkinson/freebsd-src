@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) 2015-2016 Mellanox Technologies, Ltd.
  * All rights reserved.
- * Copyright (c) 2020-2022 The FreeBSD Foundation
+ * Copyright (c) 2020-2025 The FreeBSD Foundation
  *
  * Portions of this software were developed by Björn Zeeb
  * under sponsorship from the FreeBSD Foundation.
@@ -43,13 +43,13 @@
 #include <sys/pctrie.h>
 #include <sys/rman.h>
 #include <sys/rwlock.h>
+#include <sys/stdarg.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
 #include <machine/bus.h>
 #include <machine/resource.h>
-#include <machine/stdarg.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pci_private.h>
@@ -285,7 +285,7 @@ linux_pci_find(device_t dev, const struct pci_device_id **idp)
 }
 
 struct pci_dev *
-lkpi_pci_get_device(uint16_t vendor, uint16_t device, struct pci_dev *odev)
+lkpi_pci_get_device(uint32_t vendor, uint32_t device, struct pci_dev *odev)
 {
 	struct pci_dev *pdev, *found;
 
@@ -752,7 +752,7 @@ linuxkpi_pcim_iomap_table(struct pci_dev *pdev)
 }
 
 static struct resource *
-_lkpi_pci_iomap(struct pci_dev *pdev, int bar, int mmio_size __unused)
+_lkpi_pci_iomap(struct pci_dev *pdev, int bar, unsigned long maxlen __unused)
 {
 	struct pci_mmio_region *mmio, *p;
 	int type;
@@ -792,25 +792,25 @@ _lkpi_pci_iomap(struct pci_dev *pdev, int bar, int mmio_size __unused)
 }
 
 void *
-linuxkpi_pci_iomap_range(struct pci_dev *pdev, int mmio_bar,
-    unsigned long mmio_off, unsigned long mmio_size)
+linuxkpi_pci_iomap_range(struct pci_dev *pdev, int bar,
+    unsigned long off, unsigned long maxlen)
 {
 	struct resource *res;
 
-	res = _lkpi_pci_iomap(pdev, mmio_bar, mmio_size);
+	res = _lkpi_pci_iomap(pdev, bar, maxlen);
 	if (res == NULL)
 		return (NULL);
 	/* This is a FreeBSD extension so we can use bus_*(). */
 	if (pdev->want_iomap_res)
 		return (res);
-	MPASS(mmio_off < rman_get_size(res));
-	return ((void *)(rman_get_bushandle(res) + mmio_off));
+	MPASS(off < rman_get_size(res));
+	return ((void *)(rman_get_bushandle(res) + off));
 }
 
 void *
-linuxkpi_pci_iomap(struct pci_dev *pdev, int mmio_bar, int mmio_size)
+linuxkpi_pci_iomap(struct pci_dev *pdev, int bar, unsigned long maxlen)
 {
-	return (linuxkpi_pci_iomap_range(pdev, mmio_bar, 0, mmio_size));
+	return (linuxkpi_pci_iomap_range(pdev, bar, 0, maxlen));
 }
 
 void
@@ -1530,17 +1530,34 @@ linux_dma_map_phys_common(struct device *dev __unused, vm_paddr_t phys,
 #endif
 
 dma_addr_t
-linux_dma_map_phys(struct device *dev, vm_paddr_t phys, size_t len)
+lkpi_dma_map_phys(struct device *dev, vm_paddr_t phys, size_t len,
+    enum dma_data_direction direction, unsigned long attrs)
 {
 	struct linux_dma_priv *priv;
+	dma_addr_t dma;
 
 	priv = dev->dma_priv;
-	return (linux_dma_map_phys_common(dev, phys, len, priv->dmat));
+	dma = linux_dma_map_phys_common(dev, phys, len, priv->dmat);
+	if (dma_mapping_error(dev, dma))
+		return (dma);
+
+	if ((attrs & DMA_ATTR_SKIP_CPU_SYNC) == 0)
+		dma_sync_single_for_device(dev, dma, len, direction);
+
+	return (dma);
+}
+
+/* For backward compat only so we can MFC this. Remove before 15. */
+dma_addr_t
+linux_dma_map_phys(struct device *dev, vm_paddr_t phys, size_t len)
+{
+	return (lkpi_dma_map_phys(dev, phys, len, DMA_NONE, 0));
 }
 
 #if defined(__i386__) || defined(__amd64__) || defined(__aarch64__)
 void
-linux_dma_unmap(struct device *dev, dma_addr_t dma_addr, size_t len)
+lkpi_dma_unmap(struct device *dev, dma_addr_t dma_addr, size_t len,
+    enum dma_data_direction direction, unsigned long attrs)
 {
 	struct linux_dma_priv *priv;
 	struct linux_dma_obj *obj;
@@ -1557,6 +1574,10 @@ linux_dma_unmap(struct device *dev, dma_addr_t dma_addr, size_t len)
 		return;
 	}
 	LINUX_DMA_PCTRIE_REMOVE(&priv->ptree, dma_addr);
+
+	if ((attrs & DMA_ATTR_SKIP_CPU_SYNC) == 0)
+		dma_sync_single_for_cpu(dev, dma_addr, len, direction);
+
 	bus_dmamap_unload(obj->dmat, obj->dmamap);
 	bus_dmamap_destroy(obj->dmat, obj->dmamap);
 	DMA_PRIV_UNLOCK(priv);
@@ -1565,10 +1586,18 @@ linux_dma_unmap(struct device *dev, dma_addr_t dma_addr, size_t len)
 }
 #else
 void
-linux_dma_unmap(struct device *dev, dma_addr_t dma_addr, size_t len)
+lkpi_dma_unmap(struct device *dev, dma_addr_t dma_addr, size_t len,
+    enum dma_data_direction direction, unsigned long attrs)
 {
 }
 #endif
+
+/* For backward compat only so we can MFC this. Remove before 15. */
+void
+linux_dma_unmap(struct device *dev, dma_addr_t dma_addr, size_t len)
+{
+	lkpi_dma_unmap(dev, dma_addr, len, DMA_NONE, 0);
+}
 
 void *
 linux_dma_alloc_coherent(struct device *dev, size_t size,
@@ -1671,7 +1700,7 @@ linuxkpi_dma_sync(struct device *dev, dma_addr_t dma_addr, size_t size,
 
 int
 linux_dma_map_sg_attrs(struct device *dev, struct scatterlist *sgl, int nents,
-    enum dma_data_direction direction, unsigned long attrs __unused)
+    enum dma_data_direction direction, unsigned long attrs)
 {
 	struct linux_dma_priv *priv;
 	struct scatterlist *sg;
@@ -1705,6 +1734,9 @@ linux_dma_map_sg_attrs(struct device *dev, struct scatterlist *sgl, int nents,
 		sg_dma_address(sg) = seg.ds_addr;
 	}
 
+	if ((attrs & DMA_ATTR_SKIP_CPU_SYNC) != 0)
+		goto skip_sync;
+
 	switch (direction) {
 	case DMA_BIDIRECTIONAL:
 		bus_dmamap_sync(priv->dmat, sgl->dma_map, BUS_DMASYNC_PREWRITE);
@@ -1718,6 +1750,7 @@ linux_dma_map_sg_attrs(struct device *dev, struct scatterlist *sgl, int nents,
 	default:
 		break;
 	}
+skip_sync:
 
 	DMA_PRIV_UNLOCK(priv);
 
@@ -1727,13 +1760,16 @@ linux_dma_map_sg_attrs(struct device *dev, struct scatterlist *sgl, int nents,
 void
 linux_dma_unmap_sg_attrs(struct device *dev, struct scatterlist *sgl,
     int nents __unused, enum dma_data_direction direction,
-    unsigned long attrs __unused)
+    unsigned long attrs)
 {
 	struct linux_dma_priv *priv;
 
 	priv = dev->dma_priv;
 
 	DMA_PRIV_LOCK(priv);
+
+	if ((attrs & DMA_ATTR_SKIP_CPU_SYNC) != 0)
+		goto skip_sync;
 
 	switch (direction) {
 	case DMA_BIDIRECTIONAL:
@@ -1749,6 +1785,7 @@ linux_dma_unmap_sg_attrs(struct device *dev, struct scatterlist *sgl,
 	default:
 		break;
 	}
+skip_sync:
 
 	bus_dmamap_unload(priv->dmat, sgl->dma_map);
 	bus_dmamap_destroy(priv->dmat, sgl->dma_map);

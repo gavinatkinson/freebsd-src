@@ -4,8 +4,10 @@
  * DO NOT EDIT-- this file is automatically @generated.
  */
 
+#define 	SYS_exit	SYS__exit
+
 #define	SYS_syscall	0
-#define	SYS_exit	1
+#define	SYS__exit	1
 #define	SYS_fork	2
 #define	SYS_read	3
 #define	SYS_write	4
@@ -528,4 +530,7 @@
 #define	SYS_getrlimitusage	589
 #define	SYS_fchroot	590
 #define	SYS_setcred	591
-#define	SYS_MAXSYSCALL	592
+#define	SYS_exterrctl	592
+#define	SYS_inotify_add_watch_at	593
+#define	SYS_inotify_rm_watch	594
+#define	SYS_MAXSYSCALL	595

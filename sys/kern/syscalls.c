@@ -6,7 +6,7 @@
 
 const char *syscallnames[] = {
 	"syscall",			/* 0 = syscall */
-	"exit",			/* 1 = exit */
+	"_exit",			/* 1 = _exit */
 	"fork",			/* 2 = fork */
 	"read",			/* 3 = read */
 	"write",			/* 4 = write */
@@ -597,4 +597,7 @@ const char *syscallnames[] = {
 	"getrlimitusage",			/* 589 = getrlimitusage */
 	"fchroot",			/* 590 = fchroot */
 	"setcred",			/* 591 = setcred */
+	"exterrctl",			/* 592 = exterrctl */
+	"inotify_add_watch_at",			/* 593 = inotify_add_watch_at */
+	"inotify_rm_watch",			/* 594 = inotify_rm_watch */
 };

@@ -10,6 +10,7 @@ UPDATE_DEPENDFILE= no
 
 .include <src.opts.mk>
 
+PACKAGE= bmake
 FILES=	\
 	auto.obj.mk \
 	bsd.README \
@@ -62,6 +63,7 @@ FILES=	\
 	dirdeps-targets.mk \
 	gendirdeps.mk \
 	host-target.mk \
+	host.test.mk \
 	install-new.mk \
 	jobs.mk \
 	meta.autodep.mk \
