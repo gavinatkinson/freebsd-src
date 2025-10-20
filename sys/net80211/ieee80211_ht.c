@@ -167,7 +167,7 @@ static	ieee80211_send_action_func ht_send_action_ba_delba;
 static	ieee80211_send_action_func ht_send_action_ht_txchwidth;
 
 static void
-ieee80211_ht_init(void)
+ieee80211_ht_init(void *dummy __unused)
 {
 	/*
 	 * Setup HT parameters that depends on the clock frequency.
@@ -1933,7 +1933,7 @@ ieee80211_vht_get_vhtflags(struct ieee80211_node *ni, uint32_t htflags)
 {
 #define	_RETURN_CHAN_BITS(_cb)						\
 do {									\
-	IEEE80211_NOTE(ni->ni_vap, IEEE80211_MSG_11N, ni,		\
+	if (0) IEEE80211_NOTE(ni->ni_vap, IEEE80211_MSG_11N, ni,	\
 	    "%s:%d: selected %b", __func__, __LINE__,			\
 	    (_cb), IEEE80211_CHAN_BITS);				\
 	return (_cb);							\
